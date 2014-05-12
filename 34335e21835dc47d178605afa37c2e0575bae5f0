@@ -1,0 +1,7 @@
+Code-Review+2: Dan Callaghan <dcallagh@redhat.com>
+Verified+1: Amit Saha <asaha@redhat.com>
+Submitted-by: Amit Saha <asaha@redhat.com>
+Submitted-at: Mon, 12 May 2014 02:18:31 +0000
+Reviewed-on: http://gerrit.beaker-project.org/3049
+Project: lshw
+Branch: refs/heads/master
