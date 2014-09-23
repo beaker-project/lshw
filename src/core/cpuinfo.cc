@@ -101,6 +101,10 @@ string value)
   if (id == "vendor_id")
     s390x_vendor = value;
 
+  if (id.substr(0, string("processor").size())=="processor")
+    currentcpu++;
+
+  hwNode *cpu = getcpu(node, currentcpu);
   if (cpu)
     {
       cpu->addHint("logo", string("s390x"));
