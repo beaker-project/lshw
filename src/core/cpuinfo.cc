@@ -48,7 +48,6 @@ int n = 0)
 }
 
 
-#ifdef __powerpc__
 static void cpuinfo_ppc(hwNode & node,
 string id,
 string value)
@@ -75,9 +74,7 @@ string value)
     }
   }
 }
-#endif
 
-#ifdef __s390x__
 static vector <string> s390x_features;
 static string s390x_vendor;
 static void cpuinfo_s390x(hwNode & node,
@@ -129,9 +126,7 @@ string value)
       cpu->describeCapability("te", "transactional/constraint transactional execution facilities");
     }
 }
-#endif
 
-#ifdef __arm__
 static void cpuinfo_arm(hwNode & node,
                         string id,
                         string value)
@@ -190,9 +185,7 @@ static void cpuinfo_arm(hwNode & node,
       cpu->describeCapability("evtstrm", "Unknown");
     }
 }
-#endif
 
-#ifdef __aarch64__
 static vector <string> aarch64_features;
 static string aarch64_processor_name;
 static void cpuinfo_aarch64(hwNode & node,
@@ -253,9 +246,7 @@ static void cpuinfo_aarch64(hwNode & node,
         }
     }
 }
-#endif
 
-#ifdef __ia64__
 static void cpuinfo_ia64(hwNode & node,
 string id,
 string value)
@@ -307,9 +298,7 @@ string value)
     }
   }
 }
-#endif
 
-#ifdef __hppa__
 static void cpuinfo_hppa(hwNode & node,
 string id,
 string value)
@@ -343,9 +332,7 @@ string value)
     }
   }
 }
-#endif
 
-#ifdef __alpha__
 static void cpuinfo_alpha(hwNode & node,
 string id,
 string value)
@@ -403,9 +390,7 @@ string value)
       mycpu->enable();
   }
 }
-#endif
 
-#if defined(__i386__) || defined(__x86_64__)
 static void cpuinfo_x86(hwNode & node,
 string id,
 string value)
@@ -549,7 +534,6 @@ string value)
     if(node.getWidth()==0) node.setWidth(cpu->getWidth());
   }
 }
-#endif
 
 bool scan_cpuinfo(hwNode & n)
 {
@@ -570,6 +554,7 @@ bool scan_cpuinfo(hwNode & n)
     char buffer[1024];
     size_t count;
     string cpuinfo_str = "";
+    string plat = platform();
 
     while ((count = read(cpuinfo, buffer, sizeof(buffer))) > 0)
     {
@@ -595,32 +580,38 @@ bool scan_cpuinfo(hwNode & n)
         id = hw::strip(cpuinfo_lines[i].substr(0, pos));
         value = hw::strip(cpuinfo_lines[i].substr(pos + 1));
 
-#if defined(__i386__) || defined(__x86_64__)
-        cpuinfo_x86(n, id, value);
-#endif
-#ifdef __powerpc__
-        cpuinfo_ppc(n, id, value);
-#endif
-#ifdef __s390x__
-        cpuinfo_s390x(n, id, value);
-#endif
-#ifdef __hppa__
-        cpuinfo_hppa(n, id, value);
-#endif
-#ifdef __alpha__
-        cpuinfo_alpha(n, id, value);
-#endif
-#ifdef __ia64__
-        cpuinfo_ia64(n, id, value);
-#endif
-
-#ifdef __arm__
-        cpuinfo_arm(n, id, value);
-#endif
-#ifdef __aarch64__
-        cpuinfo_aarch64(n, id, value);
-#endif
-
+        if (plat == "ppc" || plat == "ppc64" || plat == "ppc64le")
+        {
+          cpuinfo_ppc(n, id, value);
+        }
+        else if (plat == "hppa")
+        {
+          cpuinfo_hppa(n, id, value);
+        }
+        else if (plat == "alpha")
+        {
+          cpuinfo_alpha(n, id, value);
+        }
+        else if (plat == "ia64")
+        {
+          cpuinfo_ia64(n, id, value);
+        }
+        else if (plat == "s390" || plat == "s390x")
+        {
+          cpuinfo_s390x(n, id, value);
+        }
+        else if (plat.compare(0, 3, "arm") == 0)
+        {
+          cpuinfo_arm(n, id, value);
+        }
+        else if (plat == "aarch64")
+        {
+          cpuinfo_aarch64(n, id, value);
+        }
+        else
+        {
+          cpuinfo_x86(n, id, value);
+        }
       }
     }
   }
