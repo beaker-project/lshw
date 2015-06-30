@@ -26,6 +26,8 @@ namespace sysfs
       string driver() const;
       entry parent() const;
       string name_in_class(const string &) const;
+      string string_attr(const string & name, const string & def = "") const;
+      vector < string > multiline_attr(const string & name) const;
 
       struct entry_i * This;
 

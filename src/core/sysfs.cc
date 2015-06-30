@@ -299,6 +299,20 @@ entry entry::parent() const
 }
 
 
+string entry::string_attr(const string & name, const string & def) const
+{
+  return hw::strip(get_string(This->devpath + "/" + name, def));
+}
+
+
+vector < string > entry::multiline_attr(const string & name) const
+{
+  vector < string > lines;
+  loadfile(This->devpath + "/" + name, lines);
+  return lines;
+}
+
+
 vector < entry > sysfs::entries_by_bus(const string & busname)
 {
   vector < entry > result;
