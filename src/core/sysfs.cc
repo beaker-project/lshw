@@ -137,6 +137,15 @@ static string sysfstobusinfo(const string & path)
   if (bustype == "ide")
     return sysfstoide(path);
 
+  if (bustype == "virtio")
+  {
+    string name = basename(path.c_str());
+    if (name.compare(0, 6, "virtio") == 0)
+      return "virtio@" + name.substr(6);
+    else
+      return "virtio@" + name;
+  }
+
   return "";
 }
 
@@ -250,6 +259,33 @@ bool entry::hassubdir(const string & s)
 }
 
 
+string entry::name_in_class(const string & classname) const
+{
+  string result = "";
+
+  string classdir = This->devpath + "/" + classname;
+  if (!pushd(classdir))
+    return result;
+
+  struct dirent **namelist = NULL;
+  int count = scandir(".", &namelist, selectdir, alphasort);
+  popd();
+
+  if (count < 0)
+    return result;
+
+  // there should be at most one
+  for (int i = 0; i < count; i++)
+  {
+    result = namelist[i]->d_name;
+    free(namelist[i]);
+  }
+  free(namelist);
+
+  return result;
+}
+
+
 string entry::name() const
 {
   return basename(This->devpath.c_str());
@@ -260,6 +296,25 @@ entry entry::parent() const
 {
   entry e(dirname(This->devpath));
   return e;
+}
+
+
+vector < entry > sysfs::entries_by_bus(const string & busname)
+{
+  vector < entry > result;
+
+  if (!pushd(fs.path + "/bus/" + busname + "/devices"))
+    return result;
+
+  struct dirent **namelist;
+  int count;
+  count = scandir(".", &namelist, selectlink, alphasort);
+  for (int i = 0; i < count; i ++)
+  {
+    entry e = sysfs::entry::byBus(busname, namelist[i]->d_name);
+    result.push_back(e);
+  }
+  return result;
 }
 
 

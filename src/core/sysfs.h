@@ -25,6 +25,7 @@ namespace sysfs
       string businfo() const;
       string driver() const;
       entry parent() const;
+      string name_in_class(const string &) const;
 
       struct entry_i * This;
 
@@ -32,6 +33,8 @@ namespace sysfs
       entry(const string &);
 
   };
+
+  vector < entry > entries_by_bus(const string & busname);
 
 }                                                 // namespace sysfs
 
