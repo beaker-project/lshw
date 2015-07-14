@@ -1708,22 +1708,47 @@ int dmiversionmin)
 
 static bool smbios_entry_point(const u8 *buf, size_t len,
     hwNode & n, u16 & dmimaj, u16 & dmimin,
-    u16 & table_len, u32 & table_base)
+    uint32_t & table_len, uint64_t & table_base)
 {
-  if (len < 31 || memcmp(buf, "_SM_", 4) != 0)
-    return false;
+  u8 smmajver = 0;
+  u8 smminver = 0;
 
-  u8 smmajver = buf[6];
-  u8 smminver = buf[7];
-
-  buf += 16;
-  if (smmajver && (memcmp(buf, "_DMI_", 5) == 0) && checksum(buf, 0x0F))
+  if (len >= 24 && memcmp(buf, "_SM3_", 5) == 0 && checksum(buf, buf[6]))
   {
-    table_len = buf[7] << 8 | buf[6];
-    table_base = buf[11] << 24 | buf[10] << 16 | buf[9] << 8 | buf[8];
-    dmimaj = buf[14] ? buf[14] >> 4 : smmajver;
-    dmimin = buf[14] ? buf[14] & 0x0F : smminver;
+    // SMBIOS 3.0 entry point structure (64-bit)
+    dmimaj = smmajver = buf[7];
+    dmimin = smminver = buf[8];
+    table_len = (((uint32_t) buf[15]) << 24) +
+                (((uint32_t) buf[14]) << 16) +
+                (((uint32_t) buf[13]) << 8) +
+                (uint32_t) buf[12];
+    table_base = (((uint64_t) buf[23]) << 56) +
+                 (((uint64_t) buf[22]) << 48) +
+                 (((uint64_t) buf[21]) << 40) +
+                 (((uint64_t) buf[20]) << 32) +
+                 (((uint64_t) buf[19]) << 24) +
+                 (((uint64_t) buf[18]) << 16) +
+                 (((uint64_t) buf[17]) << 8) +
+                 (uint64_t) buf[16];
+  }
+  else if (len >= 31 &&
+      memcmp(buf, "_SM_", 4) == 0 &&
+      memcmp(buf + 16, "_DMI_", 5) == 0 &&
+      checksum(buf + 16, 15))
+  {
+    // SMBIOS 2.1 entry point structure
+    dmimaj = smmajver = buf[6];
+    dmimin = smminver = buf[7];
+    table_len = (((uint16_t) buf[23]) << 8) +
+                (uint16_t) buf[22];
+    table_base = (((uint32_t) buf[27]) << 24) +
+                 (((uint32_t) buf[26]) << 16) +
+                 (((uint32_t) buf[25]) << 8) +
+                 (uint32_t) buf[24];
+  }
 
+  if (smmajver > 0)
+  {
     char buffer[20];
     snprintf(buffer, sizeof(buffer), "%d.%d", smmajver, smminver);
     n.addCapability("smbios-"+string(buffer), "SMBIOS version "+string(buffer));
@@ -1742,8 +1767,8 @@ static bool scan_dmi_sysfs(hwNode & n)
   if (!exists(SYSFSDMI "/smbios_entry_point") || !exists(SYSFSDMI "/DMI"))
     return false;
 
-  u16 table_len = 0;
-  u32 table_base = 0;
+  uint32_t table_len = 0;
+  uint64_t table_base = 0;
   u16 dmimaj = 0, dmimin = 0;
 
   ifstream ep_stream(SYSFSDMI "/smbios_entry_point",
@@ -1832,8 +1857,8 @@ static bool scan_dmi_devmem(hwNode & n)
       close(fd);
       return false;
     }
-    u16 len;
-    u32 base;
+    uint32_t len;
+    uint64_t base;
     if (smbios_entry_point(buf, sizeof(buf), n, dmimaj, dmimin, len, base))
     {
       u8 *dmi_buf = (u8 *)malloc(len);
