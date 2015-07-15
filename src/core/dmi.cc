@@ -573,8 +573,13 @@ static const char *dmi_memory_device_type(u8 num)
     "",
     " DDR3",
     " FBD2",					/* 0x19 */
+    " DDR4",
+    " LPDDR",
+    " LPDDR2",
+    " LPDDR3",
+    " LPDDR4",                                        /* 0x1E */
   };
-  if (num > 0x19)
+  if (num > 0x1E)
     return "";
   return _(memory_device_type[num]);
 }
@@ -604,6 +609,12 @@ static string dmi_memory_device_detail(u16 v)
     result += " " + string(_("Cache DRAM"));
   if (v & (1 << 12))
     result += " " + string(_("Non-volatile"));
+  if (v & (1 << 13))
+    result += " " + string(_("Registered (Buffered)"));
+  if (v & (1 << 14))
+    result += " " + string(_("Unbuffered (Unregistered)"));
+  if (v & (1 << 15))
+    result += " " + string(_("LRDIMM"));
 
   return result;
 }
@@ -643,9 +654,12 @@ void dmi_chassis(u8 code, hwNode & n)
     "tca", N_("Advanced TCA"), NULL,
     "blade", N_("Blade"), NULL,		/* 0x1C */
     "enclosure", N_("Blade enclosure"), NULL,		/* 0x1D */
+    "tablet", N_("Tablet"), NULL,
+    "convertible", N_("Convertible"), NULL,
+    "detachable", N_("Detachable"), NULL,               /* 0x20 */
   };
 
-  if(code <= 0x1D)
+  if(code <= 0x20)
   {
     if(n.getDescription()=="") n.setDescription(_(chassis_type[1+3*code]));
 
@@ -657,7 +671,7 @@ void dmi_chassis(u8 code, hwNode & n)
     }
   }
 };
-static const char *dmi_processor_family(u8 code)
+static const char *dmi_processor_family(uint16_t code)
 {
   static const char *processor_family[] =
   {
@@ -691,7 +705,7 @@ static const char *dmi_processor_family(u8 code)
     "K6-2",
     "K6-3",
     "Athlon",
-    "AMD2900",
+    "AMD29000",
     "K6-2+",
     "Power PC",
     "Power PC 601",
@@ -705,7 +719,7 @@ static const char *dmi_processor_family(u8 code)
     "Core Duo mobile",
     "Core Solo mobile",
     "Atom",
-    "",
+    "Core M",
     "",
     "",
     "",
@@ -717,30 +731,30 @@ static const char *dmi_processor_family(u8 code)
     "Alpha 21164a",
     "Alpha 21264",
     "Alpha 21364",
-    "",                                           /* 0x38 */
-    "",
-    "",
-    "",
-    "",
-    "",
-    "",
-    "",
+    "Turion II Ultra Dual-Core Mobile M",         /* 0x38 */
+    "Turion II Dual-Core Mobile M",
+    "Athlon II Dual-Core M",
+    "Opteron 6100",
+    "Opteron 4100",
+    "Opteron 6200",
+    "Opteron 4200",
+    "FX",
     "MIPS",                                       /* 0x40 */
     "MIPS R4000",
     "MIPS R4200",
     "MIPS R4400",
     "MIPS R4600",
     "MIPS R10000",
-    "",                                           /* 0x46 */
-    "",
-    "",
-    "",
-    "",
-    "",
-    "",
-    "",
-    "",
-    "",
+    "C-Series",                                   /* 0x46 */
+    "E-Series",
+    "A-Series",
+    "G-Series",
+    "Z-Series",
+    "R-Series",
+    "Opteron 4300",
+    "Opteron 6300",
+    "Opteron 3300",
+    "FirePro",
     "SPARC",
     "SuperSPARC",
     "MicroSPARC II",
@@ -763,9 +777,9 @@ static const char *dmi_processor_family(u8 code)
     "68010",
     "68020",
     "68030",
-    "",                                           /* 0x66 */
-    "",
-    "",
+    "Athlon X4",                                  /* 0x66 */
+    "Opteron X1000",
+    "Opteron X2000 APU",
     "",
     "",
     "",
@@ -822,21 +836,21 @@ static const char *dmi_processor_family(u8 code)
     "",
     "",                                           /* 0x9F */
     "V30",
-    "",                                           /* 0xA1 */
-    "",
-    "",
-    "",
-    "",
-    "",
-    "",
-    "",
-    "",
-    "",
-    "",
-    "",
-    "",
-    "",
-    "",                                           /* 0xAF */
+    "Xeon 3200 Quad-Core",                        /* 0xA1 */
+    "Xeon 3000 Dual-Core",
+    "Xeon 5300 Quad-Core",
+    "Xeon 5100 Dual-Core",
+    "Xeon 5000 Dual-Core",
+    "Xeon LV Dual-Core",
+    "Xeon ULV Dual-Core",
+    "Xeon 7100 Dual-Core",
+    "Xeon 5400 Quad-Core",
+    "Xeon Quad-Core",
+    "Xeon 5200 Dual-Core",
+    "Xeon 7200 Dual-Core",
+    "Xeon 7300 Quad-Core",
+    "Xeon 7400 Quad-Core",
+    "Xeon 7400 Multi-Core",                       /* 0xAF */
     "Pentium III Xeon",
     "Pentium III Speedstep",
     "Pentium 4",
@@ -865,7 +879,7 @@ static const char *dmi_processor_family(u8 code)
     "G4",
     "G5",
     "ESA/390 G6",                                           /* 0xCB */
-    "z/Architectur base",
+    "z/Architecture base",
     "Core i5",
     "Core i3",
     "",
@@ -889,8 +903,8 @@ static const char *dmi_processor_family(u8 code)
     "",
     "",
     "",
-    "",
-    "",
+    "Opteron 3000",
+    "AMD Sempron II",
     "Embedded Opteron Quad-Core",
     "Phenom Triple-Core",
     "Turion Ultra Dual-Core Mobile",
@@ -917,13 +931,25 @@ static const char *dmi_processor_family(u8 code)
     "",
     "",
     ""                                            /* 0xFF */
-/* master.mif has values beyond that, but they can't be used for DMI */
   };
 
-  if (code >= 0xFF)
-    return "";
+  if (code <= 0xFF)
+    return processor_family[code];
 
-  return processor_family[code];
+  switch (code)
+  {
+    case 0x104: return "SH-3";
+    case 0x105: return "SH-4";
+    case 0x118: return "ARM";
+    case 0x119: return "StrongARM";
+    case 0x12C: return "6x86";
+    case 0x12D: return "MediaGX";
+    case 0x12E: return "MII";
+    case 0x140: return "WinChip";
+    case 0x15E: return "DSP";
+    case 0x1F4: return "Video Processor";
+    default: return "";
+  }
 }
 
 
@@ -1097,7 +1123,11 @@ int dmiversionmin)
           newnode.setSlot(dmi_string(dm, data[4]));
           newnode.setDescription(_("CPU"));
           newnode.addHint("icon", string("cpu"));
-          newnode.setProduct(dmi_processor_family(data[6]));
+          if (dm->length >= 0x2A)
+            newnode.setProduct(dmi_processor_family(
+                (((uint16_t) data[0x29]) << 8) + data[0x28]));
+          else
+            newnode.setProduct(dmi_processor_family(data[6]));
           newnode.setVersion(dmi_string(dm, data[0x10]));
           newnode.setVendor(dmi_string(dm, data[7]));
           newnode.setPhysId(dm->handle);
@@ -1395,11 +1425,40 @@ int dmiversionmin)
           newnode.setPhysId(dm->handle);
           newnode.setDescription(description);
           newnode.setSlot(dmi_memory_array_location(data[4]));
-//printf("\t\tError Correction Type: %s\n",
-//dmi_memory_array_error_correction_type(data[6]));
+          switch (data[6])
+          {
+            case 0x04:
+              newnode.addCapability("parity", _("Parity error correction"));
+              newnode.setConfig("errordetection", "parity");
+              break;
+            case 0x05:
+              newnode.addCapability("ecc", _("Single-bit error-correcting code (ECC)"));
+              newnode.setConfig("errordetection", "ecc");
+              break;
+            case 0x06:
+              newnode.addCapability("ecc", _("Multi-bit error-correcting code (ECC)"));
+              newnode.setConfig("errordetection", "multi-bit-ecc");
+              break;
+            case 0x07:
+              newnode.addCapability("crc", _("CRC error correction"));
+              newnode.setConfig("errordetection", "crc");
+              break;
+          }
           u2 = data[10] << 24 | data[9] << 16 | data[8] << 8 | data[7];
           if (u2 != 0x80000000)                   // magic value for "unknown"
             newnode.setCapacity(u2 * 1024);
+          else if (dm->length >= 0x17)
+          {
+            uint64_t capacity = (((uint64_t) data[0x16]) << 56) +
+                                (((uint64_t) data[0x15]) << 48) +
+                                (((uint64_t) data[0x14]) << 40) +
+                                (((uint64_t) data[0x13]) << 32) +
+                                (((uint64_t) data[0x12]) << 24) +
+                                (((uint64_t) data[0x11]) << 16) +
+                                (((uint64_t) data[0x10]) << 8) +
+                                data[0x0F];
+            newnode.setCapacity(capacity);
+          }
           hardwarenode->addChild(newnode);
         }
         break;
